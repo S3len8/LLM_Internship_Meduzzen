@@ -6,12 +6,11 @@ from dotenv import load_dotenv
 import datetime
 import argparse
 
-
 load_dotenv()
 
 
 class ChatSession:
-    def __init__(self, system_prompt = None):
+    def __init__(self, system_prompt=None):
 
         self.API_KEY = os.getenv("API_KEY")
         self.client = Groq(api_key=self.API_KEY)
@@ -46,40 +45,46 @@ class ChatSession:
                 }
             }
         },
-        {
-            "type": "function",
-            "function": {
-                "name": "explain",
-                "description": "Надає коротке пояснення навчальної теми чи терміну.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "topic": {
-                            "type": "string",
-                            "description": "Назва теми або концепту для пояснення, наприклад: 'photosynthesis' або 'gravity'"
-                        }
-                    },
-                    "required": ["topic"]
+            {
+                "type": "function",
+                "function": {
+                    "name": "explain",
+                    "description": "Надає коротке пояснення навчальної теми чи терміну.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "topic": {
+                                "type": "string",
+                                "description": "Назва теми або концепту для пояснення, наприклад: 'photosynthesis' або 'gravity'"
+                            }
+                        },
+                        "required": ["topic"]
+                    }
                 }
-            }
-        },
-        {
-            "type": "function",
-            "function": {
-                "name": "search_wikipedia",
-                "description": "Пошук інформації, фактів або історичних даних у Вікіпедії.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "query": {
-                            "type": "string",
-                            "description": "Пошуковий запит або тема для пошуку у Вікіпедії (наприклад, 'Albert Einstein' або 'Київ')."
-                        }
-                    },
-                    "required": ["query"]
+            },
+            {
+                "type": "function",
+                "function": {
+                    "name": "search_wikipedia",
+                    "description": "Пошук інформації, фактів або історичних даних у Вікіпедії.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "query": {
+                                "type": "string",
+                                "description": "Пошуковий запит або тема для пошуку у Вікіпедії (наприклад, 'Albert Einstein' або 'Київ')."
+                            }
+                        },
+                        "required": ["query"]
+                    }
                 }
-            }
-        }]
+            }]
+
+        self.tools_map = {
+            "calculate": self.calculate,
+            "explain": self.explain,
+            "search_wikipedia": self.search_wikipedia,
+        }
 
     def calculate(self, expr: str):
         return eval(expr)
@@ -103,13 +108,12 @@ class ChatSession:
         except Exception as e:
             return f"Помилка під час пошуку у Вікіпедії: {str(e)}"
 
-
     def send_message(self):
         user_message = input("You: ")
         clean_message = user_message.strip().lower()
 
-        if  clean_message in ["exit", "quit"]:
-            print(f"Goodbye!")
+        if clean_message in ["exit", "quit"]:
+            print("Goodbye!")
             return False
 
         self.messages.append({
@@ -117,7 +121,8 @@ class ChatSession:
             "content": user_message,
         })
 
-        response = self.client.chat.completions.create(model=self.model, messages=self.messages, tools=self.tools, tool_choice="auto")
+        response = self.client.chat.completions.create(model=self.model, messages=self.messages, tools=self.tools,
+                                                       tool_choice="auto")
         assistant_message = response.choices[0].message
         self.messages.append(assistant_message)
 
@@ -127,41 +132,23 @@ class ChatSession:
                 function_name = tool_call.function.name
                 function_args = json.loads(tool_call.function.arguments)
 
-                if function_name == "calculate":
-                    result = self.calculate(expr=function_args.get("expr"))
-                    self.log_tool_calls(function_name=function_name, function_args=function_args, result=result)
+                if function_name in self.tools_map:
+                    result = self.tools_map[function_name](**function_args)
+                    self.log_tool_calls(function_name=function_name, function_args=function_args['expr'], result=result)
                     self.messages.append({
                         "role": "tool",
                         "tool_call_id": tool_call.id,
                         "content": str(result)
                     })
 
-                if function_name == "explain":
-                    result = self.explain(topic=function_args.get("topic"))
-                    self.log_tool_calls(function_name=function_name, function_args=function_args, result=result)
-                    self.messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": str(result)
-                    })
-
-                if function_name == "search_wikipedia":
-                    result = self.search_wikipedia(query=function_args.get("query"))
-                    self.log_tool_calls(function_name=function_name, function_args=function_args, result=result)
-                    self.messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": str(result)
-                    })
-
-            second_response = self.client.chat.completions.create(model=self.model,messages=self.messages)
+            second_response = self.client.chat.completions.create(model=self.model, messages=self.messages)
             final_message = second_response.choices[0].message
             print(f"Assistant: {final_message.content}")
             self.messages.append(final_message)
             return True
 
         else:
-            print(f"{assistant_message.content}")
+            print(f"Assistant: {assistant_message.content}")
             return True
 
     def log_tool_calls(self, function_name, function_args, result):
@@ -171,14 +158,19 @@ class ChatSession:
 
         log_entry = f"TimeStamp: {timestamp}, Function: {function_name}, Args: {function_args}, Result: {str_result}\n"
 
-        with open("task2/logs/logs_tool_calls.md", "a", encoding="utf-8") as f:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+
+        log_path = os.path.join(current_dir, "logs", "logs_tool_calls.md")
+
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+
+        with open(log_path, "a", encoding="utf-8") as f:
             f.write(log_entry)
 
     def run_cli(self):
         is_running = True
         while is_running:
             is_running = self.send_message()
-
 
 
 if __name__ == "__main__":
