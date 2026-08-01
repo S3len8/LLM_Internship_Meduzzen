@@ -6,14 +6,7 @@ from pathlib import Path
 from typing import Any, Iterator
 from dotenv import load_dotenv
 from groq import Groq
-
-
-DEFAULT_SYSTEM_PROMPT = (
-    "Ти — уважний викладач. Пояснюй поняття просто й структуровано, "
-    "став доречні уточнювальні запитання та перевіряй, чи зрозумів "
-    "користувач пояснення. Не використовуй зовнішні інструменти або "
-    "пам'ять поза межами поточного діалогу."
-)
+from constants import DEFAULT_SYSTEM_PROMPT, MODEL 
 
 
 class ChatConfigurationError(RuntimeError):
@@ -24,7 +17,7 @@ class ChatSession:
     """Manage message history, streaming responses, tokens, and chat logs."""
     def __init__(
         self,
-        model: str = "llama-3.3-70b-versatile",
+        model: str = MODEL,
         system_prompt: str | None = None,
         *,
         api_key: str | None = None,

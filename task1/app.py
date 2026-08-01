@@ -11,9 +11,8 @@ from groq import (
     RateLimitError,
 )
 from chat_session import ChatConfigurationError, ChatSession
+from constants import EXIT_COMMANDS
 
-
-EXIT_COMMANDS = {"q", "quit", "exit"}
 
 
 def parse_args() -> argparse.Namespace:
