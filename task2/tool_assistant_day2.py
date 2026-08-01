@@ -1,114 +1,51 @@
+import datetime
 import json
 import os
-import wikipedia
-from groq import Groq
+from typing import Any
 from dotenv import load_dotenv
-import datetime
-import argparse
+from groq import Groq
+from constants import DEFAULT_PROMPT
+from functions import calculate, explain, search_wikipedia
+from schemas import TOOLS
 
 load_dotenv()
 
 
 class ChatSession:
-    def __init__(self, system_prompt=None):
-
+    def __init__(self, system_prompt=None) -> None:
         self.API_KEY = os.getenv("API_KEY")
+
+        if not self.API_KEY:
+            raise ValueError(
+                "API_KEY is not set. Add it to the .env file."
+            )
+
         self.client = Groq(api_key=self.API_KEY)
         self.model = "llama-3.1-8b-instant"
 
-        default_prompt = "You are a helpful educational assistant. When the user asks to calculate math, explain a topic, or search information, you MUST use the provided tools. Respond in Ukrainian."
-
         if system_prompt:
-            selected_prompt = f"{default_prompt}\n\nYour persona/style: {system_prompt}"
+            selected_prompt = (
+                f"{DEFAULT_PROMPT}\n\nYour persona/style: {system_prompt}"
+            )
         else:
-            selected_prompt = default_prompt
+            selected_prompt = DEFAULT_PROMPT
 
-        self.messages = [{
-            "role": "system",
-            "content": selected_prompt,
-        }]
-
-        self.tools = [{
-            "type": "function",
-            "function": {
-                "name": "calculate",
-                "description": "Обчислює математичний вираз і повертає числовий результат. Використовуй для будь-яких математичних обчислень.",
-                "parameters": {
-                    "type": "object",
-                    "properties": {
-                        "expr": {
-                            "type": "string",
-                            "description": "Математичний вираз для обчислення, наприклад: '5 * (2 + 3)' або '100 / 4'"
-                        }
-                    },
-                    "required": ["expr"]
-                }
+        self.messages = [
+            {
+                "role": "system",
+                "content": selected_prompt,
             }
-        },
-            {
-                "type": "function",
-                "function": {
-                    "name": "explain",
-                    "description": "Надає коротке пояснення навчальної теми чи терміну.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "topic": {
-                                "type": "string",
-                                "description": "Назва теми або концепту для пояснення, наприклад: 'photosynthesis' або 'gravity'"
-                            }
-                        },
-                        "required": ["topic"]
-                    }
-                }
-            },
-            {
-                "type": "function",
-                "function": {
-                    "name": "search_wikipedia",
-                    "description": "Пошук інформації, фактів або історичних даних у Вікіпедії.",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "query": {
-                                "type": "string",
-                                "description": "Пошуковий запит або тема для пошуку у Вікіпедії (наприклад, 'Albert Einstein' або 'Київ')."
-                            }
-                        },
-                        "required": ["query"]
-                    }
-                }
-            }]
+        ]
+
+        self.tools = TOOLS
 
         self.tools_map = {
-            "calculate": self.calculate,
-            "explain": self.explain,
-            "search_wikipedia": self.search_wikipedia,
+            "calculate": calculate,
+            "explain": explain,
+            "search_wikipedia": search_wikipedia,
         }
 
-    def calculate(self, expr: str):
-        return eval(expr)
-
-    def explain(self, topic: str):
-        return f"Пояснення для теми: {topic}"
-
-    def search_wikipedia(self, query: str):
-        try:
-            wikipedia.set_user_agent("EducationalBot/1.0 (contact@example.com)")
-            wikipedia.set_lang("en")
-
-            search_results = wikipedia.search(query)
-            result = wikipedia.summary(search_results[0], sentences=2)
-            return result
-
-        except wikipedia.exceptions.DisambiguationError:
-            return f"Знайдено декілька сторінок за цим запитом. Будь ласка, уточніть запит."
-        except wikipedia.exceptions.PageError:
-            return f"Сторінку у Вікіпедії не знайдено."
-        except Exception as e:
-            return f"Помилка під час пошуку у Вікіпедії: {str(e)}"
-
-    def send_message(self):
+    def send_message(self) -> bool:
         user_message = input("You: ")
         clean_message = user_message.strip().lower()
 
@@ -116,47 +53,76 @@ class ChatSession:
             print("Goodbye!")
             return False
 
-        self.messages.append({
-            "role": "user",
-            "content": user_message,
-        })
+        turn_start = len(self.messages)
+        self.messages.append(
+            {
+                "role": "user",
+                "content": user_message,
+            }
+        )
 
-        response = self.client.chat.completions.create(model=self.model, messages=self.messages, tools=self.tools,
-                                                       tool_choice="auto")
-        assistant_message = response.choices[0].message
-        self.messages.append(assistant_message)
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=self.messages,
+                tools=self.tools,
+                tool_choice="auto",
+            )
+            assistant_message = response.choices[0].message
+            self.messages.append(assistant_message)
 
-        if assistant_message.tool_calls:
+            if assistant_message.tool_calls:
+                for tool_call in assistant_message.tool_calls:
+                    function_name = tool_call.function.name
+                    function_args = json.loads(tool_call.function.arguments)
 
-            for tool_call in assistant_message.tool_calls:
-                function_name = tool_call.function.name
-                function_args = json.loads(tool_call.function.arguments)
+                    if function_name in self.tools_map:
+                        result = self.tools_map[function_name](**function_args)
+                        self.log_tool_calls(
+                            function_name=function_name,
+                            function_args=function_args,
+                            result=result,
+                        )
+                        self.messages.append(
+                            {
+                                "role": "tool",
+                                "tool_call_id": tool_call.id,
+                                "content": str(result),
+                            }
+                        )
 
-                if function_name in self.tools_map:
-                    result = self.tools_map[function_name](**function_args)
-                    self.log_tool_calls(function_name=function_name, function_args=function_args['expr'], result=result)
-                    self.messages.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": str(result)
-                    })
+                second_response = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=self.messages,
+                )
+                final_message = second_response.choices[0].message
+                print(f"Assistant: {final_message.content}")
+                self.messages.append(final_message)
+                return True
 
-            second_response = self.client.chat.completions.create(model=self.model, messages=self.messages)
-            final_message = second_response.choices[0].message
-            print(f"Assistant: {final_message.content}")
-            self.messages.append(final_message)
-            return True
-
-        else:
             print(f"Assistant: {assistant_message.content}")
             return True
 
-    def log_tool_calls(self, function_name, function_args, result):
+        except (Exception, KeyboardInterrupt) as error:
+            del self.messages[turn_start:]
+            print(f"Error while processing your message: {error}")
+            return True
+
+    def log_tool_calls(
+        self,
+        function_name: str,
+        function_args: dict[str, Any],
+        result: Any,
+    ) -> None:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
+        str_args = json.dumps(function_args, ensure_ascii=False)
         str_result = str(result)
 
-        log_entry = f"TimeStamp: {timestamp}, Function: {function_name}, Args: {function_args}, Result: {str_result}\n"
+        log_entry = (
+            f"TimeStamp: {timestamp}, Function: {function_name}, "
+            f"Args: {str_args}, Result: {str_result}\n"
+        )
 
         current_dir = os.path.dirname(os.path.abspath(__file__))
 
@@ -167,22 +133,7 @@ class ChatSession:
         with open(log_path, "a", encoding="utf-8") as f:
             f.write(log_entry)
 
-    def run_cli(self):
+    def run_cli(self) -> None:
         is_running = True
         while is_running:
             is_running = self.send_message()
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="AI Educational Assistant with Tool Support")
-
-    parser.add_argument(
-        "-p", "--persona",
-        type=str,
-        help="Вкажіть системний промпт / персону для бота (наприклад: 'Ти суворий професор')"
-    )
-
-    args = parser.parse_args()
-
-    bot = ChatSession(system_prompt=args.persona)
-    bot.run_cli()
