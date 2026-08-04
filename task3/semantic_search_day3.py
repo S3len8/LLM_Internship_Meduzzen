@@ -1,13 +1,10 @@
 from __future__ import annotations
-
 import datetime
 from pathlib import Path
-
 from dotenv import load_dotenv
-
 from chat_session import GroqChatSession
+from schemas import SearchResult
 from vector import VectorStore
-from vector import SearchResult
 
 load_dotenv()
 
@@ -31,18 +28,18 @@ def log_interactions(
 
 
 def main() -> None:
-    print("Завантаження бази знань...")
+    print("Loading the knowledge base...")
     store = VectorStore()
     store.load_documents()
 
     if not store.documents:
-        print(" Увага: База знань порожня! Перевірте папку 'quantum_corpus'.")
+        print(" Warning: The knowledge base is empty! Check the 'quantum_corpus' folder.")
         return
 
     chat = GroqChatSession()
 
     print("\n" + "=" * 50)
-    print(" Чат з базою знань готовий! Введіть 'exit' або 'quit' для виходу.")
+    print(" Knowledge-base chat is ready! Enter 'exit' or 'quit' to leave.")
     print("=" * 50 + "\n")
 
     while True:
@@ -50,7 +47,7 @@ def main() -> None:
             user_query = input("> You: ").strip()
 
             if user_query.lower() in ["exit", "quit", "вихід", "q"]:
-                print("\n До зустрічі!")
+                print("\n Goodbye!")
                 break
 
             if not user_query:
@@ -61,11 +58,11 @@ def main() -> None:
             print("\n-> Top 3 Matches:")
             if matches:
                 for i, match in enumerate(matches, 1):
-                    snippet = match["document"]["text"].replace("\n", " ")[:80]
-                    score = match["score"]
+                    snippet = match.document.text.replace("\n", " ")[:80]
+                    score = match.score
                     print(f'[{i}] "{snippet}..." (Score: {score:.2f})')
             else:
-                print("Нічого не знайдено.")
+                print("Nothing was found.")
 
             ai_response = chat.get_response(query=user_query, context_documents=matches)
 
@@ -76,7 +73,7 @@ def main() -> None:
             log_interactions(query=user_query, response=ai_response, matches=matches)
 
         except KeyboardInterrupt:
-            print("\n\n Сесію перервано. До зустрічі!")
+            print("\n\n Session interrupted. Goodbye!")
             break
         except Exception as e:
             print(f"\n An error occurred: {e}\n")
