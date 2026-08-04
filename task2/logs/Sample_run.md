@@ -16,5 +16,3 @@ You: Дякую!
 Слугував я вам! Якщо вам потрібно щось ще, не вагайтесь й спитайте!
 You: quit
 Goodbye!
-
-Process finished with exit code 0

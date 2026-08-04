@@ -2,18 +2,15 @@ import datetime
 import json
 import os
 from typing import Any
-from dotenv import load_dotenv
 from groq import Groq
-from constants import DEFAULT_PROMPT
+from constants import DEFAULT_PROMPT, API_KEY, MODEL
 from functions import calculate, explain, search_wikipedia
 from schemas import TOOLS
-
-load_dotenv()
 
 
 class ChatSession:
     def __init__(self, system_prompt=None) -> None:
-        self.API_KEY = os.getenv("API_KEY")
+        self.API_KEY = API_KEY
 
         if not self.API_KEY:
             raise ValueError(
@@ -21,7 +18,7 @@ class ChatSession:
             )
 
         self.client = Groq(api_key=self.API_KEY)
-        self.model = "llama-3.1-8b-instant"
+        self.model = MODEL
 
         if system_prompt:
             selected_prompt = (

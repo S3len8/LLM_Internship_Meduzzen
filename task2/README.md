@@ -21,4 +21,4 @@ Implemented an interactive CLI chat loop inside the `ChatSession` class supporti
   ```bash
   python task2/tool_assistant_day2.py --persona "You are a friendly pirate explaining science with 'Yo-ho-ho!'" 
   
-### All samples for this task placed in file "Sample run with 3–5 function calls (screenshot or terminal output)". 
+### All samples for this task are placed in the file `Sample_run.md`.
