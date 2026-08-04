@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, Iterator
 from dotenv import load_dotenv
 from groq import Groq
-from constants import DEFAULT_SYSTEM_PROMPT, MODEL 
+from constants import DEFAULT_SYSTEM_PROMPT, MODEL
 
 
 class ChatConfigurationError(RuntimeError):
@@ -29,11 +29,11 @@ class ChatSession:
         resolved_api_key = (
             api_key
             if api_key is not None
-            else os.getenv("GROQ_API_KEY") or os.getenv("API_KEY")
+            else os.getenv("API_KEY")
         )
         if not resolved_api_key:
             raise ChatConfigurationError(
-                "GROQ_API_KEY is missing. Add it to a .env file before starting the app."
+                "API_KEY is missing. Add it to a .env file before starting the app."
             )
 
         self.client = Groq(api_key=resolved_api_key, timeout=30.0, max_retries=2)
