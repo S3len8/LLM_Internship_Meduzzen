@@ -1,10 +1,8 @@
 """Core logic for a multi-turn Groq chat session."""
 from __future__ import annotations
-import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Iterator
-from dotenv import load_dotenv
 from groq import Groq
 from constants import DEFAULT_SYSTEM_PROMPT, MODEL
 
@@ -20,23 +18,12 @@ class ChatSession:
         model: str = MODEL,
         system_prompt: str | None = None,
         *,
-        api_key: str | None = None,
+        api_key: str,
         log_dir: str | Path | None = None,
     ) -> None:
         """Create a chat session and initialize its persistent log."""
-        load_dotenv()
 
-        resolved_api_key = (
-            api_key
-            if api_key is not None
-            else os.getenv("API_KEY")
-        )
-        if not resolved_api_key:
-            raise ChatConfigurationError(
-                "API_KEY is missing. Add it to a .env file before starting the app."
-            )
-
-        self.client = Groq(api_key=resolved_api_key, timeout=30.0, max_retries=2)
+        self.client = Groq(api_key=api_key, timeout=30.0, max_retries=2)
         self.model = model
         self.system_prompt = system_prompt or DEFAULT_SYSTEM_PROMPT
         self.started_at = datetime.now().astimezone()

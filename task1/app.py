@@ -12,6 +12,10 @@ from groq import (
 )
 from chat_session import ChatConfigurationError, ChatSession
 from constants import EXIT_COMMANDS
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 
@@ -115,8 +119,10 @@ def main() -> int:
     """Create the chat session and handle application-level shutdown."""
     args = parse_args()
 
+    api_key = os.getenv("API_KEY")
+
     try:
-        session = ChatSession(model=args.model, system_prompt=args.system_prompt)
+        session = ChatSession(model=args.model, system_prompt=args.system_prompt, api_key=api_key)
     except ChatConfigurationError as error:
         print(f"Configuration error: {error}")
         return 1
