@@ -17,10 +17,9 @@ class GroqChatSession:
 
     def _build_prompt(
         self,
-        query: str,
+        query: QueryInput,
         context_documents: list[SearchResult],
     ) -> list[dict[str, str]]:
-        validated_query = QueryInput(query=query).query
         formatted_docs: list[str] = []
         for doc in context_documents:
             metadata = doc.document.metadata or {}
@@ -34,13 +33,13 @@ class GroqChatSession:
 
         return [
             {"role": "system", "content": system_content},
-            {"role": "user", "content": validated_query},
+            {"role": "user", "content": query.query},
         ]
 
     def _call_ai(self, messages: list[dict[str, str]]) -> ChatCompletion:
         return self.client.chat.completions.create(model=self.model, messages=messages)
 
-    def get_response(self, query: str, context_documents: list[SearchResult]) -> str:
+    def get_response(self, query: QueryInput, context_documents: list[SearchResult]) -> str:
         messages = self._build_prompt(query=query, context_documents=context_documents)
 
         ai_response = self._call_ai(messages=messages)

@@ -3,14 +3,14 @@ import datetime
 from pathlib import Path
 from dotenv import load_dotenv
 from chat_session import GroqChatSession
-from schemas import SearchResult
+from schemas import SearchResult, QueryInput
 from vector import VectorStore
 
 load_dotenv()
 
 
 def log_interactions(
-    query: str,
+    query: QueryInput,
     response: str,
     matches: list[SearchResult],
 ) -> None:
@@ -21,7 +21,7 @@ def log_interactions(
 
     file_path = logs_dir / "logs.md"
 
-    logs_entry = f"Timestamp: {timestamp}, Query: {query}, Response: {response}\n"
+    logs_entry = f"Timestamp: {timestamp}, Query: {query.query}, Response: {response}\n"
 
     with open(file_path, "a", encoding="utf-8") as f:
         f.write(logs_entry)
@@ -53,7 +53,9 @@ def main() -> None:
             if not user_query:
                 continue
 
-            matches = store.search(query=user_query, top_n=3)
+            query = QueryInput(query=user_query)
+
+            matches = store.search(query=query.query, top_n=3)
 
             print("\n-> Top 3 Matches:")
             if matches:
@@ -64,13 +66,13 @@ def main() -> None:
             else:
                 print("Nothing was found.")
 
-            ai_response = chat.get_response(query=user_query, context_documents=matches)
+            ai_response = chat.get_response(query=query, context_documents=matches)
 
             print("\n-> Groq says:")
             print(ai_response)
             print("\n" + "-" * 50 + "\n")
 
-            log_interactions(query=user_query, response=ai_response, matches=matches)
+            log_interactions(query=query, response=ai_response, matches=matches)
 
         except KeyboardInterrupt:
             print("\n\n Session interrupted. Goodbye!")
