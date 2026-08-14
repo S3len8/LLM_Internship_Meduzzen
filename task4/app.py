@@ -1,7 +1,7 @@
 import datetime
 from pathlib import Path
 from chat_session import GroqChatSession
-from schemas import AudioChunkMetadata, QueryInput
+from schemas import AudioChunkMetadata
 from vector import VectorStore
 from transcription import FileTranscription
 
@@ -47,10 +47,8 @@ def main() -> None:
             if not user_query:
                 continue
 
-            query = QueryInput(query=user_query).query
-
-            if query.lower().startswith("file:"):
-                file_name = query.split(":", 1)[1].strip()
+            if user_query.lower().startswith("file:"):
+                file_name = user_query.split(":", 1)[1].strip()
 
                 if not file_name:
                     raise ValueError(
@@ -85,19 +83,19 @@ def main() -> None:
 
                 store.save()
 
-                log_interactions(query=query, response=full_transcription, summary=summary)
+                log_interactions(query=user_query, response=full_transcription, summary=summary)
 
                 continue
 
-            matches = store.search(query=query)
+            matches = store.search(query=user_query)
 
-            ai_response = chat.get_response(query=query, matches=matches)
+            ai_response = chat.get_response(query=user_query, matches=matches)
 
             print("\n-> Groq says:")
             print(ai_response)
             print("\n" + "-" * 50 + "\n")
 
-            log_interactions(query=query, response=ai_response)
+            log_interactions(query=user_query, response=ai_response)
 
         except KeyboardInterrupt:
             print("\n\n Session interrupted. Goodbye!")

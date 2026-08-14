@@ -1,6 +1,7 @@
 from groq import Groq
 from groq.types.chat import ChatCompletion
 from constants import constants
+from prompts import Prompts
 from schemas import SearchResult, SummaryInput
 
 
@@ -13,8 +14,9 @@ class GroqChatSession:
 
         self.client = Groq(api_key=self.api_key)
         self.model = constants.CHAT_MODEL_NAME
-        self.default_prompt_get_response = constants.DEFAULT_SYSTEM_PROMPT_RESPONSE
-        self.default_prompt_summary = constants.DEFAULT_SYSTEM_PROMPT_SUMMARY
+        self.prompts = Prompts()
+        self.default_prompt_get_response = self.prompts.DEFAULT_SYSTEM_PROMPT_RESPONSE
+        self.default_prompt_summary = self.prompts.DEFAULT_SYSTEM_PROMPT_SUMMARY
 
     def _build_prompt_get_response(
         self,
