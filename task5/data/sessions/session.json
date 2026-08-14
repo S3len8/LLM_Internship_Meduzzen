@@ -1,0 +1,33 @@
+[
+  {
+    "role": "system",
+    "content": "You are a helpful educational assistant. Respond in English.\n\nUse semantic_search only when the user asks for information that may be found in the user's knowledge base. Do not use it for greetings, thanks, casual conversation, or unrelated requests.\n\nUse summarize_session only when the user explicitly asks to summarize the current conversation or session. Never use it for greetings, ordinary questions, or casual conversation.\n\nWhen knowledge-base context is provided, answer using that context and mention the source file. If no relevant context is provided, answer normally without inventing a source.\n\n"
+  },
+  {
+    "role": "user",
+    "content": "What is a quantum mechanics?"
+  },
+  {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+      {
+        "id": "6be38ezkg",
+        "type": "function",
+        "function": {
+          "name": "semantic_search",
+          "arguments": "{\"query\":\"quantum mechanics definition\"}"
+        }
+      }
+    ]
+  },
+  {
+    "role": "tool",
+    "tool_call_id": "6be38ezkg",
+    "content": "[Source: manual_text]\nAtoms are about 99.9999999% empty space. If you removed all the empty space from the atoms making up every human body on Earth, the entire human race would fit inside a single sugar cube."
+  },
+  {
+    "role": "assistant",
+    "content": "Quantum mechanics is a branch of physics that studies the behavior of matter and energy at an atomic and subatomic level. It provides a new and innovative way of understanding the behavior of particles at these scales, which is different from classical physics. Quantum mechanics is based on the principles of wave-particle duality, uncertainty, and the probabilistic nature of physical phenomena.\n\nIn quantum mechanics, particles such as electrons and photons can exhibit both wave-like and particle-like behavior, depending on how they are observed. This property is known as wave-particle duality. Additionally, the uncertainty principle states that it is impossible to know certain properties of a particle, such as its position and momentum, simultaneously with infinite precision.\n\nThe probabilistic nature of quantum mechanics is reflected in the concept of wave functions, which describe the likelihood of finding a particle in a particular state. The square of the wave function gives the probability density of finding the particle at a given point in space and time.\n\nQuantum mechanics has been incredibly successful in explaining a wide range of phenomena, from the behavior of atoms and molecules to the properties of solids and liquids. It has also led to the development of many modern technologies, including transistors, lasers, and computer chips.\n\nSome of the key concepts in quantum mechanics include:\n\n* Superposition: The ability of a particle to exist in multiple states simultaneously.\n* Entanglement: The phenomenon where two or more particles become connected in such a way that the state of one particle is dependent on the state of the other.\n* Quantum tunneling: The ability of a particle to pass through a barrier or gap, even if it does not have enough energy to classically overcome the barrier.\n* Quantization: The idea that certain physical properties, such as energy, can only take on specific discrete values.\n\nOverall, quantum mechanics is a fundamental theory that has revolutionized our understanding of the physical world and has led to many important technological advancements."
+  }
+]
