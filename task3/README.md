@@ -1,0 +1,9 @@
+# Semantic Search & RAG System with FAISS and Groq
+
+This project implements a Retrieval-Augmented Generation (RAG) system built in Python for semantic search and question answering over local knowledge bases. It utilizes `sentence-transformers` (`paraphrase-multilingual-MiniLM-L12-v2`) to convert text documents into vector embeddings. The FAISS library (`IndexFlatIP`) is used for fast similarity searches using cosine distance. Document metadata and FAISS index state are persisted to disk via `pickle` and binary file dumps. 
+
+The search engine automatically indexes local text and Markdown files from a target corpus directory (`quantum_corpus`) during its initial run. Subsequent runs load the pre-computed vector index directly from disk to optimize initialization time. Query embeddings are normalized using L2 normalization to ensure accurate cosine similarity scores strictly within the range of $0.00$ to $1.00$.
+
+The retrieved top matching document chunks are dynamically injected into a system prompt for the Groq API. Powered by the `llama-3.1-8b-instant` model, the assistant generates context-aware Ukrainian responses while strictly citing the source files. The interactive CLI session handles typos gracefully due to semantic vector matching rather than exact keyword lookups. 
+
+All user interactions, including queries, matched source files, and generated AI responses, are logged into a structured Markdown file (`logs/logs.md`) with precise timestamps. The system features modular code architecture, proper exception handling, and clean session termination. It serves as a lightweight, efficient, and fully autonomous local RAG prototype.
