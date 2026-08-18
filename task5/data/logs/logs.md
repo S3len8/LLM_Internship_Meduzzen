@@ -27,3 +27,8 @@ Timestamp: 2026-08-14 16:29:08, Query: Hello, Response: I can understand that yo
 Timestamp: 2026-08-14 16:29:35, Query: /update_kb_text, Response: Knowledge added successfully. Document ID: 1, Summary: None
 Timestamp: 2026-08-14 16:29:43, Query: Thanks, Response: It was nice chatting with you, but I think that's all for now. If you have any questions or need assistance in the future, feel free to reach out., Summary: None
 Timestamp: 2026-08-14 16:29:46, Query: /quit, Response: Goodbye!, Summary: None
+Timestamp: 2026-08-18 23:52:58, Query: /exit, Response: Goodbye!, Summary: None
+Timestamp: 2026-08-18 23:56:27, Query: /update_kb_voice lecture_quantum_mechanics_last_2min.mp3, Response: Got it! The audio file “lecture_quantum_mechanics_last_2min.mp3” has been added to your knowledge base. Let me know if you’d like me to analyze it or pull out any specific information from it., Summary: None
+Timestamp: 2026-08-18 23:56:32, Query: quit, Response: Sure! If you need anything else in the future, just let me know. Have a great day!, Summary: None
+Timestamp: 2026-08-18 23:56:38, Query: /uit, Response: Goodbye! Feel free to return if you have more questions., Summary: None
+Timestamp: 2026-08-18 23:56:40, Query: /quit, Response: Goodbye!, Summary: None
