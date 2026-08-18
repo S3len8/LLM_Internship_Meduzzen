@@ -1,24 +1,21 @@
 from groq import Groq
 from groq.types.chat import ChatCompletion
-from constants import constants
-from prompts import Prompts
+from constants import (
+    CHAT_MODEL_NAME
+)
+from prompts import (
+    DEFAULT_SYSTEM_PROMPT_RESPONSE,
+    DEFAULT_SYSTEM_PROMPT_SUMMARY,
+)
 from schemas import SearchResult, SummaryInput
 
 
 class GroqChatSession:
-    def __init__(self) -> None:
-        self.api_key = constants.API_KEY
+    def __init__(self, client: Groq) -> None:
+        self.client = client
+        self.model = CHAT_MODEL_NAME
 
-        if not self.api_key:
-            raise ValueError("API_KEY is not set. Add it to the .env file.")
-
-        self.client = Groq(api_key=self.api_key)
-        self.model = constants.CHAT_MODEL_NAME
-        self.prompts = Prompts()
-        self.default_prompt_get_response = self.prompts.DEFAULT_SYSTEM_PROMPT_RESPONSE
-        self.default_prompt_summary = self.prompts.DEFAULT_SYSTEM_PROMPT_SUMMARY
-
-    def _build_prompt_get_response(
+    def _build_response_messages(
         self,
         query: str,
         matches: list[SearchResult],
@@ -32,11 +29,11 @@ class GroqChatSession:
 
         context_text = "\n\n".join(formatted_docs)
 
-        system_content = f"{self.default_prompt_get_response}Knowledge base context:\n{context_text}"
+        system_content = f"{DEFAULT_SYSTEM_PROMPT_RESPONSE}Knowledge base context:\n{context_text}"
 
         if not matches:
             return [
-                {"role": "system", "content": self.default_prompt_get_response},
+                {"role": "system", "content": DEFAULT_SYSTEM_PROMPT_RESPONSE},
                 {"role": "user", "content": query},
             ]
 
@@ -45,11 +42,11 @@ class GroqChatSession:
             {"role": "user", "content": query},
         ]
 
-    def _build_prompt_summary(self, summary: str) -> list[dict[str, str]]:
+    def _build_summary_messages(self, summary: str) -> list[dict[str, str]]:
         summary_input = SummaryInput(text=summary)
 
         return [
-            {"role": "system", "content": self.default_prompt_summary},
+            {"role": "system", "content": DEFAULT_SYSTEM_PROMPT_SUMMARY},
             {"role": "user", "content": summary_input.text},
         ]
 
@@ -57,14 +54,14 @@ class GroqChatSession:
         return self.client.chat.completions.create(model=self.model, messages=messages)
 
     def get_response(self, query: str, matches: list[SearchResult]) -> str:
-        messages = self._build_prompt_get_response(query=query, matches=matches)
+        messages = self._build_response_messages(query=query, matches=matches)
 
         ai_response = self._call_ai(messages=messages)
 
         return ai_response.choices[0].message.content or ""
 
     def summary(self, summary: str) -> str:
-        messages = self._build_prompt_summary(summary=summary)
+        messages = self._build_summary_messages(summary=summary)
 
         ai_response = self._call_ai(messages=messages)
 

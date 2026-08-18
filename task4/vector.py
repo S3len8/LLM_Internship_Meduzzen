@@ -3,18 +3,22 @@ from pathlib import Path
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from constants import constants
+from constants import (
+    DEFAULT_META_FILE,
+    DEFAULT_INDEX_FILE,
+    EMBEDDING_MODEL_NAME,
+)
 from schemas import DocumentInput, DocumentRecord, SearchRequest, SearchResult
 
 
 class VectorStore:
     def __init__(
         self,
-        index_file: str | Path = constants.DEFAULT_INDEX_FILE,
-        meta_file: str | Path = constants.DEFAULT_META_FILE,
+        index_file: str | Path = DEFAULT_INDEX_FILE,
+        meta_file: str | Path = DEFAULT_META_FILE,
     ) -> None:
         self.documents = []
-        self.model = SentenceTransformer(constants.EMBEDDING_MODEL_NAME)
+        self.model = SentenceTransformer(EMBEDDING_MODEL_NAME)
         dimension = self.model.get_sentence_embedding_dimension()
         if dimension is None:
             raise RuntimeError(

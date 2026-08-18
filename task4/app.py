@@ -2,8 +2,10 @@ import datetime
 from pathlib import Path
 from chat_session import GroqChatSession
 from schemas import AudioChunkMetadata
+from settings import Settings
 from vector import VectorStore
 from transcription import FileTranscription
+from groq import Groq 
 
 
 def log_interactions(
@@ -26,11 +28,19 @@ def log_interactions(
 
 def main() -> None:
     print("Loading the knowledge base...")
+
+    settings = Settings()
+
+    if not settings.API_KEY:
+        raise ValueError("API_KEY is not set. Add it to the .env file.")
+
+    client = Groq(api_key=settings.API_KEY)
+
     store = VectorStore()
     store.load()
 
-    chat = GroqChatSession()
-    transcription = FileTranscription()
+    chat = GroqChatSession(client=client)
+    transcription = FileTranscription(client=client)
 
     print("\n" + "=" * 50)
     print(" Knowledge-base chat is ready! Enter 'exit' or 'quit' to leave.")
