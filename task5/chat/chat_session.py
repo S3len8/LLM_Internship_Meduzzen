@@ -3,8 +3,13 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 from groq import Groq
-from config.constants import constants
-from config.prompts import Prompts
+from config.constants import (
+    CHAT_MODEL_NAME,
+)
+from config.prompts import (
+    DEFAULT_SYSTEM_PROMPT_RESPONSE,
+    DEFAULT_SYSTEM_PROMPT_SUMMARY,
+)
 from chat.tools_schema import TOOLS
 
 
@@ -12,19 +17,14 @@ TokenCallback = Callable[[str], None]
 
 
 class GroqChatSession:
-    def __init__(self, model: str | None = None) -> None:
-        self.api_key = constants.API_KEY
-        if not self.api_key:
-            raise ValueError("API_KEY is not set. Add it to the .env file.")
-
-        self.client = Groq(api_key=self.api_key)
-        self.model = model or constants.CHAT_MODEL_NAME
-        self.prompts = Prompts()
+    def __init__(self, client: Groq, model: str | None = None) -> None:
+        self.client = client
+        self.model = model or CHAT_MODEL_NAME
         self.tools = None
         self.messages: list[dict[str, Any]] = [
             {
                 "role": "system",
-                "content": self.prompts.DEFAULT_SYSTEM_PROMPT_RESPONSE,
+                "content": DEFAULT_SYSTEM_PROMPT_RESPONSE,
             }
         ]
 
@@ -33,10 +33,12 @@ class GroqChatSession:
 
     def change_prompt(self, prompt_source: str) -> str:
         prompt_source = prompt_source.strip()
+
         if not prompt_source:
             raise ValueError("System prompt cannot be empty.")
 
         prompt_path = Path(prompt_source)
+
         if prompt_path.is_file():
             prompt = prompt_path.read_text(encoding="utf-8").strip()
         else:
@@ -45,7 +47,7 @@ class GroqChatSession:
         if not prompt:
             raise ValueError("System prompt cannot be empty.")
 
-        self.prompts.DEFAULT_SYSTEM_PROMPT_RESPONSE = prompt
+        self.system_prompt = prompt
 
         if self.messages and self.messages[0].get("role") == "system":
             self.messages[0]["content"] = prompt
@@ -101,7 +103,7 @@ class GroqChatSession:
                     raise RuntimeError("Tools are not configured.")
 
                 arguments = json.loads(
-                    tool_call["function"]["arguments"] or "{}"
+                    tool_call["function"]["arguments"]
                 )
                 result = self.tools.execute(
                     name=tool_call["function"]["name"],
@@ -172,7 +174,7 @@ class GroqChatSession:
 
         ordered_tool_calls = [
             tool_calls[index]
-            for index in sorted(tool_calls)
+            for index in sorted(tool_calls) # Restore the original order of tool calls from their streaming indexes.
         ]
         return "".join(content_parts), ordered_tool_calls
 
@@ -188,7 +190,7 @@ class GroqChatSession:
             messages=[
                 {
                     "role": "system",
-                    "content": self.prompts.DEFAULT_SYSTEM_PROMPT_SUMMARY,
+                    "content": DEFAULT_SYSTEM_PROMPT_SUMMARY,
                 },
                 {
                     "role": "user",
@@ -196,7 +198,7 @@ class GroqChatSession:
                 },
             ],
         )
-        return response.choices[0].message.content or ""
+        return response.choices[0].message.content 
 
     def save_session(self, storage) -> str:
         return storage.save(

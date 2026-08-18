@@ -1,5 +1,5 @@
 import datetime
-from config.constants import LOGS_DIR
+from config.settings import LOGS_DIR
 
 def log_interactions(
     query: str,
@@ -8,9 +8,8 @@ def log_interactions(
 ) -> None:
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    logs_dir = LOGS_DIR
-    logs_dir.mkdir(parents=True, exist_ok=True)
-    file_path = logs_dir / "logs.md"
+    LOGS_DIR.mkdir(parents=True, exist_ok=True)
+    file_path = LOGS_DIR / "logs.md"
 
     logs_entry = (
         f"Timestamp: {timestamp}, Query: {query}, "

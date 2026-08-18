@@ -1,6 +1,5 @@
 from collections.abc import Callable
 from typing import Any
-
 from knowledge_base.vector import VectorStore
 
 

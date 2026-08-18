@@ -1,16 +1,18 @@
 from pathlib import Path
 from groq import Groq
-from config.constants import AUDIO_DIR, constants
+from config.settings import (
+    AUDIO_DIR,
+)
+from config.constants import (
+    CHAT_AUDIO_TRANSCRIPTION_MODEL,
+)
 from schemas import AudioFileInput, ChunkingRequest, TranscriptInput
 
 
 class FileTranscription:
-    def __init__(self) -> None:
-        if not constants.API_KEY:
-            raise ValueError("API_KEY is not set. Add it to the .env file.")
-
-        self.client: Groq = Groq(api_key=constants.API_KEY)
-        self.model: str = constants.CHAT_AUDIO_TRANSCRIPTION_MODEL
+    def __init__(self, client: Groq) -> None:
+        self.client = client
+        self.model: str = CHAT_AUDIO_TRANSCRIPTION_MODEL
         self.audio_dir: Path = AUDIO_DIR
 
     def get_file(self, file_name: str) -> Path:

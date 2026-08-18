@@ -10,6 +10,8 @@ from knowledge_base.vector import VectorStore
 from logger import log_interactions
 from storage.session_storage import SessionStorage
 from tts import TextToSpeech
+from config.settings import Settings
+from groq import Groq
 
 
 def parse_args() -> argparse.Namespace:
@@ -30,15 +32,20 @@ def parse_args() -> argparse.Namespace:
 
 
 def main() -> None:
+    settings = Settings()
+
+    if not settings.API_KEY:
+        raise ValueError("API_KEY is not set. Add it to the .env file.")
+
+    client = Groq(api_key=settings.API_KEY)
     args = parse_args()
     console = Console()
 
     console.print("Loading the knowledge base...", style="bold cyan")
     store = VectorStore()
-    store.load()
 
-    chat = GroqChatSession(model=args.model)
-    transcription = FileTranscription()
+    chat = GroqChatSession(client=client, model=args.model)
+    transcription = FileTranscription(client=client)
     session_storage = SessionStorage()
     text_to_speech = TextToSpeech() if args.voice else None
     command_names = CommandsName()
@@ -89,7 +96,7 @@ def main() -> None:
                 continue
 
             if normalized_query == command_names.COMMAND_UPDATE_VOICE:
-                result = commands.update_voice()
+                result = commands.update_voice(file_name=argument)
                 console.print("Assistant:", style="bold green", end=" ")
                 console.print(result, markup=False)
                 log_interactions(query=user_query, response=result)

@@ -2,14 +2,19 @@ import pickle
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
-from config.constants import BASE_DIR, constants
+from config.settings import BASE_DIR
+from config.constants import (
+    EMBEDDING_MODEL_NAME,
+    DEFAULT_INDEX_FILE,
+    DEFAULT_META_FILE,
+)
 from schemas import DocumentInput, DocumentRecord, SearchRequest, SearchResult
 
 
 class VectorStore:
     def __init__(self) -> None:
         self.documents = []
-        self.model = SentenceTransformer(constants.EMBEDDING_MODEL_NAME)
+        self.model = SentenceTransformer(EMBEDDING_MODEL_NAME)
         dimension = self.model.get_sentence_embedding_dimension()
         if dimension is None:
             raise RuntimeError(
@@ -17,8 +22,9 @@ class VectorStore:
             )
         self.dimension = dimension
         self.index = faiss.IndexFlatIP(self.dimension)
-        self.index_file = BASE_DIR / constants.DEFAULT_INDEX_FILE
-        self.meta_file = BASE_DIR / constants.DEFAULT_META_FILE
+        self.index_file = BASE_DIR / DEFAULT_INDEX_FILE
+        self.meta_file = BASE_DIR / DEFAULT_META_FILE
+        self.load()
 
     def _get_embeddings(self, text: str) -> np.ndarray:
         embedding = self.model.encode(text, convert_to_numpy=True).astype(

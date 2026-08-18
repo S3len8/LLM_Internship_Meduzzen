@@ -1,7 +1,9 @@
 from pathlib import Path
 from typing import Literal
 from pydantic import BaseModel, Field, field_validator
-from config.constants import constants
+from config.constants import (
+    SUPPORTED_AUDIO_EXTENSIONS,
+)
 
 
 class QueryInput(BaseModel):
@@ -35,7 +37,7 @@ class AudioFileInput(BaseModel):
         if path.is_absolute() or path.name != value:
             raise ValueError("Only a file name inside audio_files is allowed.")
 
-        if path.suffix.lower() not in constants.SUPPORTED_AUDIO_EXTENSIONS:
+        if path.suffix.lower() not in SUPPORTED_AUDIO_EXTENSIONS:
             raise ValueError(f"File extension not supported: {path.suffix}")
 
         return value

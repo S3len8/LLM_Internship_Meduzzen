@@ -34,7 +34,7 @@ class Commands:
 
         return f"Knowledge added successfully. Document ID: {document_id}"
 
-    def update_voice(self, file_name: str | None = None) -> str:
+    def update_voice(self, file_name: str) -> str:
         if file_name is None:
             print("Assistant: Enter audio file path:")
             file_name = input("> User: ")

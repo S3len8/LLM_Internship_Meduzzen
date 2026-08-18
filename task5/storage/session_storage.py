@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
 from typing import Any
-from config.constants import SESSIONS_DIR
-
+from config.settings import SESSIONS_DIR
 
 class SessionStorage:
     def __init__(
